@@ -30,7 +30,7 @@ def print_stadistic(threadName, source, destination, delay):
 thread1 = myThread("Escucha de Cliente - Reenvio a Server", "Cliente", "Server", 1)
 thread2 = myThread("Escucha de Server - Reenvio a Cliente", "Server", "Cliente" ,  3)
 
-# Start new Threads
+# Inicio de los hilos
 thread1.start()
 thread2.start()
 
