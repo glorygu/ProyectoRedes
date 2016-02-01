@@ -8,6 +8,11 @@
 import socket
 import sys
  
+ 
+window_size = raw_input("Introduzca el tamanio de ventana: ")
+print window_size
+file_name = raw_input("Introduzca el nombre del archivo: ")
+print file_name
 # Creando un socket TCP/IP
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
  
