@@ -12,7 +12,8 @@ import sys
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 # Enlace de socket y puerto
-server_address = ('localhost', 10001)
+port = input("Puerto inter cliente  ")
+server_address = ('localhost', port) #con cliente
 print >>sys.stderr, 'empezando a levantar %s puerto %s' % server_address
 sock.bind(server_address)
 
@@ -45,7 +46,7 @@ while True:
 					sock2.sendall(message)
 					amount_received = 0
 					amount_expected = len(message)
-
+					print 'Enviando puerto al servidor' 
 					while amount_received < amount_expected:
 						data = sock2.recv(19)
 						amount_received += len(data)

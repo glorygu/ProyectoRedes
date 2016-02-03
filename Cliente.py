@@ -57,15 +57,15 @@ while (x < len(content_list)):
 
 # Conecta el socket en el puerto cuando el servidor esté escuchando
 
-
-server_address = ('localhost', 10001)
+port = input ("puerto cliente: ")
+server_address = ('localhost', port)
 print >>sys.stderr, 'conectando a %s puerto %s' % server_address
 sock.connect(server_address)
 
 try:
      
     # Enviando datos
-    message = 'Este es el mensaje.  Se repitio.'
+    message =raw_input("Introduzca el numero de puerto")
     print >>sys.stderr, 'enviando "%s"' % message
     sock.sendall(message)
  

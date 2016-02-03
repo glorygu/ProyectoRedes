@@ -7,7 +7,8 @@
 
 import socket
 import sys
- 
+
+port_number = 0
 # Creando el socket TCP/IP
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
@@ -19,7 +20,7 @@ sock.bind(server_address)
 # Escuchando conexiones entrantes
 sock.listen(1)
  
-while True:
+while (port_number==0): #while True:
     # Esperando conexion
     print >>sys.stderr, 'Esperando para conectarse'
     connection, client_address = sock.accept()
@@ -28,9 +29,10 @@ while True:
         print >>sys.stderr, 'concexion desde', client_address
  
         # Recibe los datos en trozos y reetransmite
-        while True:
+        while (port_number == 0): #while True
             data = connection.recv(1000)
             print >>sys.stderr, 'recibido "%s"' % data
+            port_number = int(data)
             if data:
                 print >>sys.stderr, 'enviando mensaje de vuelta al intermediario'
                 connection.sendall(data)
@@ -41,3 +43,6 @@ while True:
     finally:
         # Cerrando conexion
         connection.close()
+        
+
+print 'Puerto recibido:  ', port_number
