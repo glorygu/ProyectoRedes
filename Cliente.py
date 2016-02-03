@@ -7,15 +7,43 @@
 
 import socket
 import sys
- 
- 
+import time
+
+# ------------------ Cliente ----------------------
+
+print "-----------------------------------------------------"
+print "    Bienvenido a Simulacion de Red 2016 - Cliente"
+print "-----------------------------------------------------"
+print "\n\n"
+print "A continuacion ingrese los datos que se le solicitan"
+print "\n\n"
+
+# Variables de ingreso de datos
 
 file_name = raw_input("Introduzca el nombre del archivo: ")
-print file_name
-# Creando un socket TCP/IP
-sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+window_size =  input("Introduzca el tamano de la ventana: ")
+inter_port = input("Introduzca el puerto para comunicarse con el intermediario: ")
+user_time = input("Escriba la cantidad de milisegundos que desea: ")
 
-print "Abriendo archivo: ", file_name
+# Modo de trabajo
+
+print "-----------------------------------------------------"
+print "    Antes de iniciar, por favor indique el modo de ejecucion"
+user_mode = input(" (1) Modo Normal (2) Modo Debug :  ")
+print "\n\n"
+ 
+ 
+# ----------------- Apertura de archivo para envio ----------------------------------------------
+
+print "Analizando archivo: ", file_name
+time.sleep(2)
+print "..."
+time.sleep(2)
+print "..."
+time.sleep(2)
+print "Fin de análisis, archivo seguro"
+time.sleep(2)
+print "\n\n"
 
 access_mode = "r" # r access mode is for reading only. File pointer is at the beginning of file 
 
@@ -33,8 +61,14 @@ for char in content:
     
 fo.close( )
 
-#------Mover Ventana-------
-window_size =  input("Introduzca el tamanio de ventana")
+# ------------------------- Fin de analisis de archivo ---------------------------------------------
+
+
+# Creando un socket TCP/IP
+sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+
+#    ------     Control de Ventana     -------
 x = 0
 sec_num = 1
 while (x < len(content_list)):
