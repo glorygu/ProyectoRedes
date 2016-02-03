@@ -7,6 +7,26 @@
 
 import socket
 import sys
+
+
+print "-----------------------------------------------------"
+print "    Bienvenido a Simulacion de Red 2016 - Servidor"
+print "-----------------------------------------------------"
+print "\n\n"
+print "A continuacion ingrese los datos que se le solicitan"
+print "\n\n"
+
+# Variables de ingreso de datos
+
+inter_port = input("Introduzca el puerto de escucha del servidor: ")
+
+# Modo de trabajo
+
+print "-----------------------------------------------------"
+print "    Antes de iniciar, por favor indique el modo de ejecucion"
+user_mode = input(" (1) Modo Normal (2) Modo Debug :  ")
+print "\n\n"
+
  
 # Creando el socket TCP/IP
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
