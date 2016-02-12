@@ -37,47 +37,51 @@ fo.close( )
 window_size =  input("Introduzca el tamanio de ventana")
 x = 0
 sec_num = 1
-while (x < len(content_list)):
-    acked_segs = 0
-    for it in range (0, window_size):
-        if (x+it < len(content_list)):
-            print ("Sending item #"+ str(sec_num)+":"+content_list [x+it])
-            sec_num = sec_num + 1
-        #else:
-            #print "All items have been sent"
-    acked_segs = input("ACKed segs")
-    if (acked_segs>window_size):
-        acked_segs = window_size #acked_segs lo va aindicar el intermediario
-    sec_num=sec_num-(window_size-acked_segs)
-    x = x + acked_segs
-    print "current value of x: ", x 
+
 
 
 
 
 # Conecta el socket en el puerto cuando el servidor esté escuchando
 
-port = input ("puerto cliente: ")
-server_address = ('localhost', port)
+client_port = input ("Introduzca puerto cliente: ")
+#port = 10001
+server_address = ('localhost', client_port)
 print >>sys.stderr, 'conectando a %s puerto %s' % server_address
 sock.connect(server_address)
 
 try:
      
     # Enviando datos
-    message =raw_input("Introduzca el numero de puerto")
-    print >>sys.stderr, 'enviando "%s"' % message
-    sock.sendall(message)
- 
+    #message =raw_input("Introduzca elnumero de puerto mensjae")
+    #print >>sys.stderr, 'enviando "%s"' % message
+    #sock.sendall(message)
+    while (x < len(content_list)):
+        acked_segs = 0
+        for it in range (0, window_size):
+        #Enviando contenidos de la ventana
+            if (x+it < len(content_list)):
+                package = "#"+ str(sec_num)+":"+content_list [x+it]
+                sock.sendall(package)
+                print ("Enviando "+package)
+                sec_num = sec_num + 1
+                
+        
+        #Recibe Acks
+        amount_received = 0
+        amount_expected = window_size
+        while amount_received < amount_expected:
+            data = sock.recv(19)
+            amount_received += 1
+            print >>sys.stderr, 'recibiendo "%s"' % data
+        #Cuenta ACKs recibidos
+        acked_segs = input("ACKed segs")
+        if (acked_segs>window_size):
+            acked_segs = window_size #acked_segs lo va aindicar el intermediario
+        sec_num=sec_num-(window_size-acked_segs)
+        x = x + acked_segs
+        print "current value of x: ", x 
     # Buscando respuesta
-    amount_received = 0
-    amount_expected = len(message)
-     
-    while amount_received < amount_expected:
-        data = sock.recv(19)
-        amount_received += len(data)
-        print >>sys.stderr, 'recibiendo "%s"' % data
- 
 finally:
     print >>sys.stderr, 'cerrando socket'
     sock.close()
