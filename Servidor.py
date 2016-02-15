@@ -1,9 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
- 
-# Programa Servidor
-# Fuente original de este codigo: www.pythondiario.com
-# Utilizado para fines academicos en el curso CI-1320 
+
 
 import socket
 import sys
@@ -26,6 +23,39 @@ print "-----------------------------------------------------"
 print "    Antes de iniciar, por favor indique el modo de ejecucion"
 user_mode = input(" (1) Modo Normal (2) Modo Debug :  ")
 print "\n\n"
+
+
+# -------------------- Extraccion de paquetes ----------------------------------
+
+def clear_list(input_list):
+    size = len(input_list) 
+    iterator = 1
+    while iterator <= size:
+        #print str(iterator)
+        del input_list[size-iterator]
+        iterator += 1
+
+
+ack_list = []
+def extract_acks (initial_package):
+    iterator = 0
+    size = len(initial_package)
+    clear_list(ack_list)
+    while (iterator < size):
+        #print initial_package[iterator]
+        if initial_package[iterator] == '#':
+            current_ack = ""
+            iterator += 1
+            while (iterator < size and initial_package[iterator] != '#' and initial_package[iterator] != ':'):
+                #print initial_package[iterator]
+                current_ack += initial_package[iterator]
+                iterator += 1
+            ack_list.append(current_ack)
+        else:
+            iterator+=1
+    return ack_list
+
+# ------------------------------------------------------------------------------
 
 
 
@@ -66,7 +96,10 @@ while True:
                 
                 try:
                     message = data
-                    socket_intermediario.sendall("ACK: "+message)
+                    extract_acks(message)
+                    iterator = 0 
+                    for iterator in range(0, len(ack_list)):
+                        socket_intermediario.sendall("ACK: "+ack_list[iterator])
                     
                 finally:
                     socket_intermediario.close()

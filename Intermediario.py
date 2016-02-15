@@ -1,13 +1,11 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
- 
-# Programa Servidor
-# Fuente original de este codigo: www.pythondiario.com
-# Utilizado para fines academicos en el curso CI-1320 
+
 
 import socket
 import sys
 import threading
+import random
  
  
 print "-----------------------------------------------------"
@@ -120,16 +118,22 @@ def runThreads(name, thread_number):
 				        	
 				        	split_packages(message)  							# Se analiza el paquete
 				        	for index in range(len(package_list)):
-				        		socket_send_server.sendall(package_list[index])
+				        	    
+				        	    random_number = random.randint(100,10000) * 0.010
+				        	    if random_number >= probability:
+				        	        print "Se envia paquete"
+				        	        socket_send_server.sendall(package_list[index])
+				        	    else:
+				        	        print "Se pierde el paquete"
 				        	clear_list()										# Limpia el buffer temporal
 				        	
 				        finally:
-				        	print >>sys.stderr, 'Envio de dato a server'
+				        	# print >>sys.stderr, 'Envio de dato a server'
 				        	socket_send_server.close()
 				        	
     		finally:
     			# connectionC.close()
-    			print >>sys.stderr, 'Reenvia mensaje a server'
+    			print >>sys.stderr, '.'
     			# socket_send_server.close()
     	
     elif thread_number == 1: 
