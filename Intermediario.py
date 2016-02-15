@@ -7,6 +7,7 @@
 
 import socket
 import sys
+import threading
  
  
 print "-----------------------------------------------------"
@@ -29,63 +30,161 @@ print "    Antes de iniciar, por favor indique el modo de ejecucion"
 user_mode = input(" (1) Modo Normal (2) Modo Debug :  ")
 print "\n\n"
  
- 
- 
-# Creando el socket TCP/IP
-sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-# Enlace de socket y puerto
-server_address = ('localhost', 10001)
-print >>sys.stderr, 'empezando a levantar %s puerto %s' % server_address
-sock.bind(server_address)
 
 
+# --------------  Creacion de la clase para hilos ------------------------------
 
-# Escuchando conexiones entrantes
-sock.listen(1)
- 
-while True:
-	# Esperando conexion
-	print >>sys.stderr, 'Esperando para conectarse'
-	connection, client_address = sock.accept()
+# Hilo 0 -- Desde cliente hasta servidor
+# Hilo 1 -- Desde servidor hasta cliente
 
-	try:
-		print >>sys.stderr, 'concexion desde', client_address
-
-		# Recibe los datos en trozos y reetransmite
-		while True:
-			data = connection.recv(1000)
-			print >>sys.stderr, 'recibido "%s"' % data
-			if data:
-				sock2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-				server_address = ('localhost', 10000)
-				print >>sys.stderr, 'conectando a %s puerto %s' % server_address
-				sock2.connect(server_address)
-
-				try:
-					message = data
-					print >>sys.stderr, 'enviando al servidor"%s"' % message
-					sock2.sendall(message)
-					amount_received = 0
-					amount_expected = len(message)
-
-					while amount_received < amount_expected:
-						data = sock2.recv(19)
-						amount_received += len(data)
-						print >>sys.stderr, 'recibiendo "%s"' % data
-						connection.sendall(data)
-
-				finally:
-					print >>sys.stderr, 'cerrando socket'
-					#sock2.close()
+class myThread (threading.Thread):
+    def __init__(self, name, thread_number):
+        threading.Thread.__init__(self)
+        self.name = name
+        self.thread_number = thread_number
+        
+        # Procedimiento al correr el hilo
+        
+    def run(self):
+        print "Inicia el servicio: " + self.name
+        runThreads(self.name, self.thread_number)
+        print "Fin del servicio " + self.name
 
 
-			else:
-				print >>sys.stderr, 'no hay mas datos', client_address
-				break
+# ------------------------------------------------------------------------------
 
-	finally:
-		# Cerrando conexion
-		connection.close()
-		sock2.close()		
-		
+# --------------- Socket compartido de escucha y envio a cliente ---------------
+
+socket_listen_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server_address = ('localhost', int(inter_client_port))
+socket_listen_client.bind(server_address)
+print "Se ha levantado hilo desde cliente hasta servidor"
+socket_listen_client.listen(1)
+print "Esperando conexion desde cliente"
+connectionC, client_address = socket_listen_client.accept()
+
+# ------------------------------------------------------------------------------
+
+# ----------------- Funciones para el manejo de paquetes -----------------------
+
+package_list = []
+
+def clear_list():
+    size = len(package_list) 
+    iterator = 1
+    while iterator <= size:
+        #print str(iterator)
+        del package_list[size-iterator]
+        iterator += 1
+
+def split_packages (initial_package):
+    iterator = 0
+    size = len(initial_package)
+    clear_list ()
+    while (iterator < size):
+        #print initial_package[iterator]
+        if initial_package[iterator] == '#':
+            current_package = "#"
+            iterator += 1
+            while (iterator < size and initial_package[iterator] != '#'):
+                #print initial_package[iterator]
+                current_package += initial_package[iterator]
+                iterator += 1
+            package_list.append(current_package)
+        else:
+            iterator+=1
+
+# ------------------------------------------------------------------------------
+
+
+# ----- Método encargado de activar los hilos y preparar la escucha de datos ---
+
+def runThreads(name, thread_number):
+    if thread_number == 0:
+    	# Levanta el hilo 0
+    	
+    	while True:
+    		
+    		try:
+    			# print >>sys.stderr, 'Conexion desde el cliente: ', client_address
+    			
+    			while True:
+    				data = connectionC.recv(1000)
+    				if data:
+    					socket_send_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+				        server_address = ('localhost', int(inter_server_port))
+				        socket_send_server.connect(server_address)
+				        
+				        try:
+				        	message = data
+				        	
+				        	split_packages(message)  							# Se analiza el paquete
+				        	for index in range(len(package_list)):
+				        		socket_send_server.sendall(package_list[index])
+				        	clear_list()										# Limpia el buffer temporal
+				        	
+				        finally:
+				        	print >>sys.stderr, 'Envio de dato a server'
+				        	socket_send_server.close()
+				        	
+    		finally:
+    			# connectionC.close()
+    			print >>sys.stderr, 'Reenvia mensaje a server'
+    			# socket_send_server.close()
+    	
+    elif thread_number == 1: 
+    	
+    	# Levanta el hilo 1    	
+    	
+    	socket_listen_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    	server_address = ('localhost', 10002)
+    	socket_listen_server.bind(server_address)
+    	
+    	print "Se ha levantado hilo desde servidor hasta cliente"
+    	
+    	socket_listen_server.listen(1)
+    	
+    	
+    	while True:
+    		print "Esperando conexion desde servidor"
+    		connection, client_address = socket_listen_server.accept()
+    		
+    		try:
+    			print >>sys.stderr, 'Conexion desde el servidor: ', client_address
+    			
+    			while True:
+    				data = connection.recv(1000)
+    				if data:
+    					# socket_send_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+				        # server_address = ('localhost', 10001)
+				        # socket_send_client.connect(server_address)
+				        
+				        try:
+				        	message = data
+					        connectionC.sendall(message)
+				        finally:
+				        	print >>sys.stderr, 'Reenvia mensaje'
+				        	# socket_send_client.close()
+				        	
+    				else:
+    					break
+				        	
+				        	
+    		finally:
+    			# connection.close()
+    			print >>sys.stderr, 'Reenvia mensaje a cliente'
+    			# socket_send_client.close()
+    	
+
+
+# ------------------------------------------------------------------------------
+
+# Creacion de hilos
+
+thread0 = myThread("Hilo Cliente a Servidor", 0)
+thread1 = myThread("Hilo Servidor a Cliente" ,  1)
+
+# Inicio de los hilos
+
+thread0.start()
+thread1.start()

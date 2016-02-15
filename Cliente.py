@@ -24,6 +24,7 @@ file_name = raw_input("Introduzca el nombre del archivo: ")
 window_size =  input("Introduzca el tamano de la ventana: ")
 inter_port = input("Introduzca el puerto para comunicarse con el intermediario: ")
 user_time = input("Escriba la cantidad de milisegundos que desea: ")
+user_miliseconds = float(user_time)
 
 # Modo de trabajo
 
@@ -36,13 +37,12 @@ print "\n\n"
 # ----------------- Apertura de archivo para envio ----------------------------------------------
 
 print "Analizando archivo: ", file_name
-time.sleep(2)
+# time.sleep(2)
 print "..."
-time.sleep(2)
+# time.sleep(2)
 print "..."
-time.sleep(2)
 print "Fin de análisis, archivo seguro"
-time.sleep(2)
+# time.sleep(2)
 print "\n\n"
 
 access_mode = "r" # r access mode is for reading only. File pointer is at the beginning of file 
@@ -61,59 +61,71 @@ for char in content:
     
 fo.close( )
 
-# ------------------------- Fin de analisis de archivo ---------------------------------------------
+# ------------------------- Fin de analisis de archivo -------------------------
 
 
-# Creando un socket TCP/IP
-sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+# ---------------- Creacion de socket hacia Intermediario ----------------------
 
 
-#    ------     Control de Ventana     -------
-x = 0
-sec_num = 1
-while (x < len(content_list)):
-    acked_segs = 0
-    for it in range (0, window_size):
-        if (x+it < len(content_list)):
-            print ("Sending item #"+ str(sec_num)+":"+content_list [x+it])
-            sec_num = sec_num + 1
-        #else:
-            #print "All items have been sent"
-    acked_segs = input("ACKed segs")
-    if (acked_segs>window_size):
-        acked_segs = window_size #acked_segs lo va aindicar el intermediario
-    sec_num=sec_num-(window_size-acked_segs)
-    x = x + acked_segs
-    print "current value of x: ", x 
-
-
-
-
-# Conecta el socket en el puerto cuando el servidor esté escuchando
-
-
-server_address = ('localhost', 10001)
+socket_intermediario = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+port = int(inter_port)
+server_address = ('localhost', port)
 print >>sys.stderr, 'conectando a %s puerto %s' % server_address
-sock.connect(server_address)
+socket_intermediario.connect(server_address)
+
+# ------------------------------------------------------------------------------
+
+
+
+
+# ---------------- Funcion para envio de mensajes a Intermediario --------------
+
+def run_timer(mensaje, numero):
+    time_start = time.time()
+    millis = int(round(time.time() * 1000))
+    keep_running = True
+    
+    while keep_running:
+        try:
+            millis = float(round(time.time() - time_start, 4)) * 1000
+            if millis >= user_miliseconds:
+                sys.stdout.write("\r{millis} MiliSegundos transcurridos\n".format(millis=millis))
+                
+                message1 = "#"+str(numero)+":H"
+                message2 = "#"+str((numero+1))+":o"
+                message3 = "#"+str((numero+2))+":l"
+                message4 = "#"+str((numero+3))+":a"
+                socket_intermediario.sendall(message1)
+                socket_intermediario.sendall(message2)
+                socket_intermediario.sendall(message3)
+                socket_intermediario.sendall(message4)
+                
+                # Se escucha si fueron recibidos los mensajes ---
+                
+                message_received = socket_intermediario.recv(1000)
+                print >>sys.stderr, 'Mensaje recibido: "%s"' % message_received
+                
+                # connection, client_address = sock.accept()
+                # message_received = connection.recv(1000)
+                # print >>sys.stderr, 'Mensaje recibido: "%s"' % message_received
+                
+                # -----------------------------------------------
+                
+                keep_running = False
+        except KeyboardInterrupt, e:
+            break
+# ------------------------------------------------------------------------------
 
 try:
-     
-    # Enviando datos
-    message = 'Este es el mensaje.  Se repitio.'
-    print >>sys.stderr, 'enviando "%s"' % message
-    sock.sendall(message)
- 
-    # Buscando respuesta
-    amount_received = 0
-    amount_expected = len(message)
-     
-    while amount_received < amount_expected:
-        data = sock.recv(19)
-        amount_received += len(data)
-        print >>sys.stderr, 'recibiendo "%s"' % data
+    
+    contador = 1
+    
+    while True:
+        
+        run_timer("Hola Mundo", contador)
+        contador += 4
+        
  
 finally:
     print >>sys.stderr, 'cerrando socket'
-    sock.close()
-
-
+    socket_intermediario.close()
