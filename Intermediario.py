@@ -12,8 +12,8 @@ import sys
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 # Enlace de socket y puerto
-client_port = input("Introduzca Puerto inter cliente  ")
-server_port = input ("Introduzca puerto para servidor" )
+client_port = input("Introduzca el puerto para comunicarse con el cliente:  ")
+server_port = input ("Introduzca puerto para comunicarse con el servidor: " )
 #client_port = 10001
 server_address = ('localhost', client_port) #con cliente
 print >>sys.stderr, 'empezando a levantar %s puerto %s' % server_address
@@ -34,7 +34,7 @@ while True:
 
 		# Recibe los datos en trozos y reetransmite
 		while True:
-			data = connection.recv(4)
+			data = connection.recv(1000)
 			print >>sys.stderr, 'recibido "%s"' % data
 			if data:
 				sock2 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -45,16 +45,19 @@ while True:
 				try:
 					message = data
 					print >>sys.stderr, 'enviando al servidor"%s"' % message
-					sock2.sendall(message)
-					amount_received = 0
-					amount_expected =1# len(message)
-					print 'Enviando puerto al servidor' 
+					sock2.send(message)
+					
+					#print 'Enviando puerto al servidor' 
 					try:
+						amount_received = 0
+						amount_expected =1# len(message)
 						while amount_received < amount_expected:
 							data = sock2.recv(19)
-							amount_received += len(data)
+							amount_received += 1 #len(data)
 							print >>sys.stderr, 'recibiendo "%s"' % data
-							connection.sendall(data)
+							connection.send(data)
+							print "Enviando " +data +" al cliente"
+							
 					finally:
 						print 'listo'
 				finally:
