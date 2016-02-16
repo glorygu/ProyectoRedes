@@ -25,6 +25,9 @@ user_mode = input(" (1) Modo Normal (2) Modo Debug :  ")
 print "\n\n"
 
 
+ack_list = []
+expected_sec_num = 1
+
 # -------------------- Extraccion de paquetes ----------------------------------
 
 def clear_list(input_list):
@@ -36,11 +39,12 @@ def clear_list(input_list):
         iterator += 1
 
 
-ack_list = []
 def extract_acks (initial_package):
+    global expected_sec_num
     iterator = 0
     size = len(initial_package)
     clear_list(ack_list)
+    acks_in_order = True
     while (iterator < size):
         #print initial_package[iterator]
         if initial_package[iterator] == '#':
@@ -50,13 +54,24 @@ def extract_acks (initial_package):
                 #print initial_package[iterator]
                 current_ack += initial_package[iterator]
                 iterator += 1
-            ack_list.append(current_ack)
+            if current_ack == expected_sec_num:
+                ack_list.append(current_ack)
+                expected_sec_num += 1
+                
+                # Ingresar valor a archivo de salida
+                
+            else:
+                acks_in_order = False
         else:
             iterator+=1
     return ack_list
 
 # ------------------------------------------------------------------------------
 
+# -------------------- Variables globales --------------------------------------
+
+
+# ------------------------------------------------------------------------------
 
 
 # --------------------- Socket para ingreso de trafico -------------------------
@@ -99,7 +114,7 @@ while True:
                     extract_acks(message)
                     iterator = 0 
                     for iterator in range(0, len(ack_list)):
-                        socket_intermediario.sendall("ACK: "+ack_list[iterator])
+                            socket_intermediario.sendall("#"+ack_list[iterator])
                     
                 finally:
                     socket_intermediario.close()

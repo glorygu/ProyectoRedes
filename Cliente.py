@@ -32,36 +32,51 @@ print "-----------------------------------------------------"
 print "    Antes de iniciar, por favor indique el modo de ejecucion"
 user_mode = input(" (1) Modo Normal (2) Modo Debug :  ")
 print "\n\n"
- 
- 
-# ----------------- Apertura de archivo para envio ----------------------------------------------
 
-print "Analizando archivo: ", file_name
-# time.sleep(2)
-print "..."
-# time.sleep(2)
-print "..."
-print "Fin de análisis, archivo seguro"
-# time.sleep(2)
-print "\n\n"
 
-access_mode = "r" # r access mode is for reading only. File pointer is at the beginning of file 
+if user_mode == 1:
+    debug_mode = False
+else:
+    debug_mode = True
+    
+# --------------------- Inicializacion de variables ----------------------------
 
-fo = open (file_name, access_mode)
-
-content = fo.read() #mete todo el conenido en la string content
 content_list = []
+received_acks_list = []
+file_opened = False
+content_iterator = 0
+sec_num = 1
+
+# ------------------------------------------------------------------------------
+
+# ------------------------------ Analisis de archivo ---------------------------
+
+while  file_opened == False: 
+    if debug_mode:
+        print "Abriendo archivo: ", file_name
+    try: 
+        fo = open (file_name, "r")
+        content = fo.read()                             # Mete el contenido el string content
+        
+    except IOError:
+        print "Error al abrir el achivo. Debe introducir el nombre del archivo. "
+        file_name = raw_input("Introduzca el nombre del archivo: ")
+    else:
+        if debug_mode:
+            print 'Se abrio el archivo de manera exitosa. '
+        file_opened = True
+    
+    
+# Pasa contenido de archivo de string a una lista
 for char in content:
     content_list.append(char)
-    #mete todo el contenido en un array 
-
-#verificar contenido    
-#for x in range (0, len(content_list)):
-    #print content_list[x]
     
+    # Mete todo el contenido en un array 
+    
+# Cierra archivo
 fo.close( )
-
-# ------------------------- Fin de analisis de archivo -------------------------
+ 
+# ------------------------------------------------------------------------------
 
 
 # ---------------- Creacion de socket hacia Intermediario ----------------------
@@ -75,57 +90,127 @@ socket_intermediario.connect(server_address)
 
 # ------------------------------------------------------------------------------
 
+# ---------------- Limpieza de listas ------------------------------------------
+
+def clear_list(input_list):
+    size = len(input_list) 
+    iterator = 1
+    while iterator <= size:
+        #print str(iterator)
+        del input_list[size-iterator]
+        iterator += 1
+
+# ------------------------------------------------------------------------------
+
+# ---------------- Variables globales ------------------------------------------
+
+expected_ack = 1
+count_received_acks = 0
+
+# ------------------------------------------------------------------------------
+
+
+# ---------------- Separacion de ACK -------------------------------------------
+
+received_acks_list = []
+
+def clear_list():
+    size = len(received_acks_list) 
+    iterator = 1
+    while iterator <= size:
+        #print str(iterator)
+        del received_acks_listinput_list[size-iterator]
+        iterator += 1
+
+def extract_acks (initial_package):
+    iterator = 0
+    size = len(initial_package)
+    clear_list()
+    while (iterator < size):
+        #print initial_package[iterator]
+        if initial_package[iterator] == '#':
+            current_ack = ""
+            iterator += 1
+            while (iterator < size and initial_package[iterator] != '#'):
+                #print initial_package[iterator]
+                current_ack += initial_package[iterator]
+                iterator += 1
+            received_acks_list.append(current_ack)
+        else:
+            iterator+=1
+
+
+# ------------------------------------------------------------------------------
+
 
 
 
 # ---------------- Funcion para envio de mensajes a Intermediario --------------
 
-def run_timer(mensaje, numero):
-    time_start = time.time()
-    millis = int(round(time.time() * 1000))
-    keep_running = True
-    
-    while keep_running:
-        try:
-            millis = float(round(time.time() - time_start, 4)) * 1000
-            if millis >= user_miliseconds:
-                sys.stdout.write("\r{millis} MiliSegundos transcurridos\n".format(millis=millis))
-                
-                message1 = "#"+str(numero)+":H"
-                message2 = "#"+str((numero+1))+":o"
-                message3 = "#"+str((numero+2))+":l"
-                message4 = "#"+str((numero+3))+":a"
-                socket_intermediario.sendall(message1)
-                socket_intermediario.sendall(message2)
-                socket_intermediario.sendall(message3)
-                socket_intermediario.sendall(message4)
-                
-                # Se escucha si fueron recibidos los mensajes ---
-                
-                message_received = socket_intermediario.recv(1000)
-                print >>sys.stderr, 'Mensaje recibido: "%s"' % message_received
-                
-                # connection, client_address = sock.accept()
-                # message_received = connection.recv(1000)
-                # print >>sys.stderr, 'Mensaje recibido: "%s"' % message_received
-                
-                # -----------------------------------------------
-                
-                keep_running = False
-        except KeyboardInterrupt, e:
-            break
-# ------------------------------------------------------------------------------
-
 try:
     
-    contador = 1
+    while (content_iterator < len(content_list)):                               # Iterador de archivo
     
-    while True:
         
-        run_timer("Hola Mundo", contador)
-        contador += 4
+        # -------------- Envio de paquetes -------------------------------------
         
- 
-finally:
-    print >>sys.stderr, 'cerrando socket'
+        count_received_acks = 0
+        window_start = content_iterator
+        window_end = content_iterator + window_size
+        for it in range (0, window_size):
+        #Enviando contenidos de la ventana
+            if (content_iterator+it < len(content_list)):
+                package = "#"+ str(sec_num)+":"+content_list [content_iterator+it]
+                socket_intermediario.sendall(package)
+                if debug_mode:
+                    print ("Enviando "+ package)
+                sec_num = sec_num + 1
+                #time.sleep(2)
+            
+                
+        # --------------- Fin de envio de paquetes -----------------------------
+        
+        
+        time_start = time.time()                    # Configuracion de timer
+        millis = int(round(time.time() * 1000))
+        keep_running = True
+        
+        data = socket_intermediario.recv(1000)
+        
+        while keep_running:                         # Inicia el timer
+            
+            try:
+                millis = float(round(time.time() - time_start, 4)) * 1000
+            
+                # --------------- Recepcion de ACK -------------------------------------
+                
+                print >>sys.stderr, 'Estoy esperando'
+                
+                extract_acks(data)
+                
+                if (min(received_ack_list) < expected_ack or max(received_ack_list) > expected_ack+window_size):
+                    count_received_acks = 0
+                else:
+                    for index in range(0,len(received_ack_list)):
+                        if (received_ack_list[index] == expected_ack):
+                            expected_ack += 1
+                            count_received_acks += 1
+                content_iterator += count_received_acks
+            
+                #print "current value of content_iterator: ", content_iterator 
+                # Buscando respuesta
+            
+            # -----------------------------------------------------------------------
+                
+                if millis >= user_miliseconds or count_received_acks == window_size:    # Timer se detiene
+                    keep_running = False
+                
+            except KeyboardInterrupt, e:
+                break
+        
+finally:                                                                        # Fin iterador de archivo
+    print >>sys.stderr, 'Cliente cerrando socket'
     socket_intermediario.close()
+
+# ------------------------------------------------------------------------------
+
