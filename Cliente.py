@@ -42,11 +42,11 @@ else:
 # --------------------- Inicializacion de variables ----------------------------
 
 content_list = []
-received_acks_list = []
+#received_acks_list = []
 file_opened = False
 content_iterator = 0
 sec_num = 1
-
+sent_packages = 0
 # ------------------------------------------------------------------------------
 
 # ------------------------------ Analisis de archivo ---------------------------
@@ -112,14 +112,14 @@ count_received_acks = 0
 
 # ---------------- Separacion de ACK -------------------------------------------
 
-received_acks_list = []
+received_ack_list = []
 
 def clear_list():
-    size = len(received_acks_list) 
+    size = len(received_ack_list) 
     iterator = 1
     while iterator <= size:
         #print str(iterator)
-        del received_acks_listinput_list[size-iterator]
+        del received_ack_list[size-iterator]
         iterator += 1
 
 def extract_acks (initial_package):
@@ -135,7 +135,7 @@ def extract_acks (initial_package):
                 #print initial_package[iterator]
                 current_ack += initial_package[iterator]
                 iterator += 1
-            received_acks_list.append(current_ack)
+            received_ack_list.append(current_ack)
         else:
             iterator+=1
 
@@ -158,10 +158,12 @@ try:
         window_start = content_iterator
         window_end = content_iterator + window_size
         for it in range (0, window_size):
+            sent_packages = 0
         #Enviando contenidos de la ventana
             if (content_iterator+it < len(content_list)):
                 package = "#"+ str(sec_num)+":"+content_list [content_iterator+it]
                 socket_intermediario.sendall(package)
+                sent_packages += 1
                 if debug_mode:
                     print ("Enviando "+ package)
                 sec_num = sec_num + 1
@@ -174,37 +176,41 @@ try:
         time_start = time.time()                    # Configuracion de timer
         millis = int(round(time.time() * 1000))
         keep_running = True
+        if debug_mode: 
+            print "Empezando a recibir ACKs"
         
-        data = socket_intermediario.recv(1000)
-        
-        while keep_running:                         # Inicia el timer
+        millis = float(round(time.time() - time_start, 4)) * 1000
+        while  count_received_acks < sent_packages: # millis < user_miliseconds and                        # Inicia el timer
             
             try:
-                millis = float(round(time.time() - time_start, 4)) * 1000
+                #millis = float(round(time.time() - time_start, 4)) * 1000
             
                 # --------------- Recepcion de ACK -------------------------------------
                 
                 print >>sys.stderr, 'Estoy esperando'
-                
+                data = socket_intermediario.recv(1000)
+                print "Datos recibidos " + data
                 extract_acks(data)
-                
-                if (min(received_ack_list) < expected_ack or max(received_ack_list) > expected_ack+window_size):
-                    count_received_acks = 0
-                else:
-                    for index in range(0,len(received_ack_list)):
-                        if (received_ack_list[index] == expected_ack):
-                            expected_ack += 1
-                            count_received_acks += 1
+                for index in range(0,len(received_ack_list)):
+                    print "Examinando el ack: " +received_ack_list[index] 
+                    if (int(received_ack_list[index]) == expected_ack):
+                        expected_ack += 1
+                        count_received_acks += 1
+                if debug_mode: 
+                    print "ACKs recibidos: "+ str(count_received_acks) + " . Ultimo ack: " + str(expected_ack-1)
+                sec_num = expected_ack
                 content_iterator += count_received_acks
-            
+                #count_received_acks = window_size
                 #print "current value of content_iterator: ", content_iterator 
                 # Buscando respuesta
             
             # -----------------------------------------------------------------------
                 
-                if millis >= user_miliseconds or count_received_acks == window_size:    # Timer se detiene
+                '''if millis >= user_miliseconds: # count_received_acks == window_size
                     keep_running = False
-                
+                    if debug_mode:
+                        print "Se vencio timer, vueve a enviar"
+                '''
             except KeyboardInterrupt, e:
                 break
         

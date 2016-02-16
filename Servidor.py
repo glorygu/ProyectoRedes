@@ -40,12 +40,14 @@ def clear_list(input_list):
 
 
 def extract_acks (initial_package):
+    print "Extrayendo ACKS"
     global expected_sec_num
     iterator = 0
     size = len(initial_package)
     clear_list(ack_list)
     acks_in_order = True
-    while (iterator < size):
+    print "# secuencia esperado: " + str (expected_sec_num)
+    while (iterator < size and acks_in_order):
         #print initial_package[iterator]
         if initial_package[iterator] == '#':
             current_ack = ""
@@ -54,7 +56,8 @@ def extract_acks (initial_package):
                 #print initial_package[iterator]
                 current_ack += initial_package[iterator]
                 iterator += 1
-            if current_ack == expected_sec_num:
+            print "ACk actual en formato de string " + current_ack
+            if int(current_ack) == expected_sec_num:
                 ack_list.append(current_ack)
                 expected_sec_num += 1
                 
@@ -115,6 +118,7 @@ while True:
                     iterator = 0 
                     for iterator in range(0, len(ack_list)):
                             socket_intermediario.sendall("#"+ack_list[iterator])
+                            print "Enviando al cliente el ACK: " + ack_list[iterator]
                     
                 finally:
                     socket_intermediario.close()
