@@ -66,7 +66,10 @@ while True:
                 
                 try:
                     message = data
-                    socket_intermediario.sendall("ACK: "+message)
+                    extract_acks(message)
+                    iterator = 0 
+                    for iterator in range(0, len(ack_list)):
+                        socket_intermediario.sendall("ACK: "+ack_list[iterator])
                     
                 finally:
                     socket_intermediario.close()
