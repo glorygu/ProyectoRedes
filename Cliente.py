@@ -1,9 +1,9 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
- 
-# Programa Cliente
-# Fuente original de este codigo: www.pythondiario.com
-# Utilizado para fines academicos en el curso CI-1320 
+# 
+#   Universidad de Costa Rica
+#
+#   Desarrollado por: Gloriana Garro
+#                     Jose Pablo Urena Gutierrez
+# 
 
 import socket
 from socket import AF_INET, SOCK_STREAM
@@ -154,7 +154,7 @@ def extract_acks (initial_package):
 
 try:
     
-    while (content_iterator < len(content_list)):                               # Iterador de archivo
+    while (content_iterator < len(content_list) and sec_num <= len(content_list)):                               # Iterador de archivo
     
         
         # -------------- Envio de paquetes -------------------------------------
@@ -163,16 +163,17 @@ try:
         count_received_acks = 0
         window_start = content_iterator
         window_end = content_iterator + window_size
+        sent_packages = 0
         for it in range (0, window_size):
-            sent_packages = 0
+            #sent_packages = 0
         #Enviando contenidos de la ventana
             if (content_iterator+it < len(content_list)):
-                package = "#"+ str(sec_num)+":"+content_list [content_iterator+it]
+                package = "#"+ str(content_iterator+it+1)+":"+content_list [content_iterator+it]
                 socket_intermediario.sendall(package)
                 sent_packages += 1
                 if debug_mode:
                     print ("Enviando "+ package)
-                sec_num = sec_num + 1
+                #sec_num = sec_num + 1
             
                 
 # --------------- Fin de envio de paquetes -------------------------------------
@@ -188,6 +189,9 @@ try:
         time_start = time.time()
         millis = int(round(time.time() * 1000))
         keep_running = True
+        
+        print >>sys.stderr, 'Count receive', count_received_acks
+        print >>sys.stderr, 'sent', sent_packages
     
         while keep_running and count_received_acks < sent_packages:
             try:
@@ -204,8 +208,8 @@ try:
                             count_received_acks += 1
                     if debug_mode:
                         print "ACKs recibidos: "+ str(count_received_acks) + " . Ultimo ack: " + str(expected_ack-1)
-                    sec_num = expected_ack
-                    content_iterator += count_received_acks
+                    #sec_num = expected_ack
+                    #content_iterator += count_received_acks
                     
                 except socket.timeout:
                     print >>sys.stderr, ''
@@ -213,18 +217,19 @@ try:
                 
                 if millis >= user_miliseconds:
                     keep_running = False
-                    sec_num = window_start + 1
+                    #sec_num = window_start + 1
                     
             except KeyboardInterrupt, e:
                 break
         
         print >>sys.stderr, 'Sale de timer'
-            
+        print >>sys.stderr, 'Conteo de llegada', count_received_acks
+        content_iterator += count_received_acks    
             
 # ------------------------------------------------------------------------------
         
 finally:                                                                        # Fin iterador de archivo
     print >>sys.stderr, 'Cliente cerrando socket'
-    socket_intermediario.close()
+    # socket_intermediario.close()
 
 # ------------------------------------------------------------------------------
