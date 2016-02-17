@@ -88,6 +88,11 @@ def split_packages (initial_package):
                 #print initial_package[iterator]
                 current_package += initial_package[iterator]
                 iterator += 1
+            print "indice: " + str(iterator)
+            if iterator-1 >= 0 and iterator < size:
+                if initial_package[iterator] == '#' and initial_package[iterator-1]==':':
+                    current_package += initial_package[iterator]
+                    iterator += 1
             package_list.append(current_package)
         else:
             iterator+=1
@@ -166,6 +171,7 @@ def runThreads(name, thread_number):
 				        try:
 				        	message = data
 					        connectionC.sendall(message)
+					        print >>sys.stderr, 'Mensaje de server: ', message
 				        finally:
 				        	print >>sys.stderr, 'Reenvia mensaje'
 				        	# socket_send_client.close()

@@ -57,11 +57,10 @@ def extract_acks (initial_package):
                 current_ack += initial_package[iterator]
                 iterator += 1
             print "ACk actual en formato de string " + current_ack
-            if current_ack != "":
-                if int(current_ack) == expected_sec_num:
-                    #mete al archivo
-                    expected_sec_num += 1
+            if int(current_ack) == expected_sec_num:
                 ack_list.append(current_ack)
+                expected_sec_num += 1
+                
                 # Ingresar valor a archivo de salida
                 
             else:
