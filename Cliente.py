@@ -6,6 +6,7 @@
 # Utilizado para fines academicos en el curso CI-1320 
 
 import socket
+from socket import AF_INET, SOCK_STREAM
 import sys
 import time
 
@@ -142,14 +143,14 @@ def extract_acks (initial_package):
 
 # ------------------------------------------------------------------------------
 
-
+file_end = False
 
 
 # ---------------- Funcion para envio de mensajes a Intermediario --------------
 
 try:
     
-    while (content_iterator < len(content_list)):                               # Iterador de archivo
+    while (content_iterator < len(content_list) and sec_num <= len(content_list)):                               # Iterador de archivo
     
         
         # -------------- Envio de paquetes -------------------------------------
@@ -157,6 +158,8 @@ try:
         count_received_acks = 0
         window_start = content_iterator
         window_end = content_iterator + window_size
+        print "Enviando ventana nueva"
+        
         for it in range (0, window_size):
             sent_packages = 0
         #Enviando contenidos de la ventana
@@ -173,46 +176,49 @@ try:
         # --------------- Fin de envio de paquetes -----------------------------
         
         
-        time_start = time.time()                    # Configuracion de timer
-        millis = int(round(time.time() * 1000))
-        keep_running = True
+        # --------------- Recepcion de ACK ---------------------------------------------
+        
         if debug_mode: 
             print "Empezando a recibir ACKs"
+                
+        print >>sys.stderr, 'Estoy esperando'
+        data = ""
         
-        millis = float(round(time.time() - time_start, 4)) * 1000
-        while  count_received_acks < sent_packages: # millis < user_miliseconds and                        # Inicia el timer
-            
+        time_start = time.time()
+        millis = int(round(time.time() * 1000))
+        keep_running = True
+    
+        while keep_running and count_received_acks < sent_packages :
             try:
-                #millis = float(round(time.time() - time_start, 4)) * 1000
-            
-                # --------------- Recepcion de ACK -------------------------------------
+                millis = float(round(time.time() - time_start, 4)) * 1000
                 
-                print >>sys.stderr, 'Estoy esperando'
-                data = socket_intermediario.recv(1000)
-                print "Datos recibidos " + data
-                extract_acks(data)
-                for index in range(0,len(received_ack_list)):
-                    print "Examinando el ack: " +received_ack_list[index] 
-                    if (int(received_ack_list[index]) == expected_ack):
-                        expected_ack += 1
-                        count_received_acks += 1
-                if debug_mode: 
-                    print "ACKs recibidos: "+ str(count_received_acks) + " . Ultimo ack: " + str(expected_ack-1)
-                sec_num = expected_ack
-                content_iterator += count_received_acks
-                #count_received_acks = window_size
-                #print "current value of content_iterator: ", content_iterator 
-                # Buscando respuesta
-            
-            # -----------------------------------------------------------------------
-                
-                '''if millis >= user_miliseconds: # count_received_acks == window_size
-                    keep_running = False
+                try:
+                    data = socket_intermediario.recv(1000)
+                    print "Datos recibidos " + data
+                    extract_acks(data)
+                    for index in range(0,len(received_ack_list)):
+                        print "Examinando el ack: " +received_ack_list[index]
+                        if (int(received_ack_list[index]) == expected_ack):
+                            expected_ack += 1
+                            count_received_acks += 1
                     if debug_mode:
-                        print "Se vencio timer, vueve a enviar"
-                '''
+                        print "ACKs recibidos: "+ str(count_received_acks) + " . Ultimo ack: " + str(expected_ack-1)
+                    sec_num = window_start + count_received_acks + 1
+                    content_iterator += count_received_acks
+                    print "Numero de secuencia: " + str(sec_num)
+                    nthing = raw_input("nothing")
+                except socket.timeout:
+                    print >>sys.stderr, ''
+                
+                
+                if millis >= user_miliseconds:
+                    keep_running = False
+                    sec_num = window_start + 1
+               
             except KeyboardInterrupt, e:
                 break
+        
+        print >>sys.stderr, 'Sale de timer'
         
 finally:                                                                        # Fin iterador de archivo
     print >>sys.stderr, 'Cliente cerrando socket'
