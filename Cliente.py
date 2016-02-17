@@ -157,7 +157,7 @@ try:
     while (content_iterator < len(content_list) and sec_num <= len(content_list)):                               # Iterador de archivo
     
         
-        # -------------- Envio de paquetes -------------------------------------
+# ---------------------- Envio de paquetes -------------------------------------
         
         
         count_received_acks = 0
