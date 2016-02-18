@@ -33,6 +33,26 @@ if user_mode == 1:
 else:
     debug_mode = True
 
+
+# -------------------- Creacion de archivo de salida ---------------------------
+
+file_created = False
+
+while file_created == False:
+    output_file_name = raw_input("Ingrese el nombre de archivo de salida: ")
+    try: 
+        output_file = open (output_file_name, 'a') #w
+    except IOError:
+        print 'No se pudo abrir ', output_file_name
+    else:
+        if debug_mode:
+            print 'Se creo archivo de salida de manera exitosa. '
+        file_created = True
+        
+# ------------------------------------------------------------------------------        
+
+
+caracteres = ""
 ack_list = []
 expected_sec_num = 1
 
@@ -48,6 +68,7 @@ def clear_list(input_list):
 
 def extract_acks (initial_package):
     global expected_sec_num
+    global caracteres
     iterator = 0
     size = len(initial_package)
     clear_list(ack_list)
@@ -70,6 +91,16 @@ def extract_acks (initial_package):
             if int(current_ack) == expected_sec_num:
                 ack_list.append(current_ack)
                 expected_sec_num += 1
+                
+                if (initial_package[iterator] == ':'):
+                    if (iterator+1 < len(initial_package)):
+                        #output_file = open (output_file_name, 'w')
+                        #print >>sys.stderr, 'valor de archivo: ', initial_package[iterator+1]
+                        caracteres += initial_package[iterator+1]
+                        open_file = open(output_file_name, "a")
+                        open_file.write(initial_package[iterator+1])
+                        open_file.close()
+                        #output_file.close()
                 
                 # Ingresar valor a archivo de salida
                 
@@ -142,5 +173,4 @@ while True:
                 break
              
     finally:
-        # Cerrando conexion
         connection.close()

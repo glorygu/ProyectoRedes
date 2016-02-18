@@ -63,7 +63,8 @@ while  file_opened == False:
         content = fo.read()                             # Mete el contenido el string content
         
     except IOError:
-        print "Error al abrir el achivo. Debe introducir el nombre del archivo. "
+        if debug_mode:
+            print "Error al abrir el achivo. Debe introducir el nombre del archivo. "
         file_name = raw_input("Introduzca el nombre del archivo: ")
     else:
         if debug_mode:
@@ -90,7 +91,8 @@ socket_intermediario = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 socket_intermediario.settimeout(1)
 port = int(inter_port)
 server_address = ('localhost', port)
-print >>sys.stderr, 'conectando a %s puerto %s' % server_address
+if debug_mode:
+    print >>sys.stderr, 'Conectando a %s , por el puerto: %s' % server_address
 socket_intermediario.connect(server_address)
 
 # ------------------------------------------------------------------------------
@@ -164,6 +166,8 @@ try:
         window_start = content_iterator
         window_end = content_iterator + window_size
         sent_packages = 0
+        if debug_mode:
+            print ("-----------------------------------------------------------------------\n")
         for it in range (0, window_size):
             #sent_packages = 0
         #Enviando contenidos de la ventana
@@ -172,7 +176,7 @@ try:
                 socket_intermediario.sendall(package)
                 sent_packages += 1
                 if debug_mode:
-                    print ("Enviando "+ package)
+                    print ("  Enviando el paquete: "+ package)
                 #sec_num = sec_num + 1
             
                 
@@ -181,17 +185,15 @@ try:
 # --------------- Recepcion de ACK ---------------------------------------------
         
         if debug_mode: 
-            print "Empezando a recibir ACKs"
-                
-        print >>sys.stderr, 'Estoy esperando'
-        data = ""
+            print "Inicio de recepcion de ACKs"
         
+        data = ""
         time_start = time.time()
         millis = int(round(time.time() * 1000))
         keep_running = True
         
-        print >>sys.stderr, 'Count receive', count_received_acks
-        print >>sys.stderr, 'sent', sent_packages
+        if debug_mode:
+            print >>sys.stderr, 'Cantidad de paquetes enviados: ', sent_packages
     
         while keep_running and count_received_acks < sent_packages:
             try:
@@ -199,15 +201,17 @@ try:
                 
                 try:
                     data = socket_intermediario.recv(1000)
-                    print "Datos recibidos " + data
+                    if debug_mode:
+                        print "Datos recibidos de servidor: " + data
                     extract_acks(data)
                     for index in range(0,len(received_ack_list)):
-                        print "Examinando el ack: " +received_ack_list[index]
+                        if debug_mode:
+                            print "Examinando el ACK: " +received_ack_list[index]
                         if (int(received_ack_list[index]) == expected_ack):
                             expected_ack += 1
                             count_received_acks += 1
                     if debug_mode:
-                        print "ACKs recibidos: "+ str(count_received_acks) + " . Ultimo ack: " + str(expected_ack-1)
+                        print "ACKs recibidos: "+ str(count_received_acks) + " -- Ultimo ACK recibido: " + str(expected_ack-1)
                     #sec_num = expected_ack
                     #content_iterator += count_received_acks
                     
@@ -221,15 +225,17 @@ try:
                     
             except KeyboardInterrupt, e:
                 break
-        
-        print >>sys.stderr, 'Sale de timer'
-        print >>sys.stderr, 'Conteo de llegada', count_received_acks
+        if debug_mode:
+            if keep_running == False:
+                print >>sys.stderr, 'Se vence el timer de la ventana.'
+                print >>sys.stderr, 'Cantidad de ACKs recibidos: ', count_received_acks
+                print ("-----------------------------------------------------------------------\n")
         content_iterator += count_received_acks    
             
 # ------------------------------------------------------------------------------
         
 finally:                                                                        # Fin iterador de archivo
-    print >>sys.stderr, 'Cliente cerrando socket'
+    print >>sys.stderr, 'El archivo ha sido enviado satisfactoriamente.'
     # socket_intermediario.close()
 
 # ------------------------------------------------------------------------------
